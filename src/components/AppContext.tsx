@@ -204,9 +204,40 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
         setRobotStatus(statusData);
         setCurrentTag(statusData.currentTag);
         setPreviousTag(statusData.previousTag);
-        setIsConnected(statusData.isOnline);
+        
+        // Check if robot is online based on isOnline flag and last update time
+        const lastUpdate = statusData.lastUpdate?.toDate?.();
+        const now = new Date();
+        const timeSinceLastUpdate = lastUpdate ? now.getTime() - lastUpdate.getTime() : Infinity;
+        const isRecentlyUpdated = timeSinceLastUpdate < 10000; // 10 seconds timeout (2x heartbeat interval)
+        
+        // Robot is considered connected if isOnline is true AND we've received a recent update
+        const isActuallyOnline = statusData.isOnline && isRecentlyUpdated;
+        setIsConnected(isActuallyOnline);
+        
+        if (!isActuallyOnline && statusData.isOnline) {
+          console.warn(`🤖 Robot marked as online but no recent updates (${Math.round(timeSinceLastUpdate/1000)}s ago)`);
+        }
+      } else {
+        // No status data available - robot is offline
+        setIsConnected(false);
       }
     });
+
+    // Periodic connection status check
+    const connectionCheckInterval = setInterval(() => {
+      if (robotStatus && robotStatus.isOnline) {
+        const lastUpdate = robotStatus.lastUpdate?.toDate?.();
+        const now = new Date();
+        const timeSinceLastUpdate = lastUpdate ? now.getTime() - lastUpdate.getTime() : Infinity;
+        const isRecentlyUpdated = timeSinceLastUpdate < 10000; // 10 seconds timeout (2x heartbeat interval)
+        
+        if (!isRecentlyUpdated && isConnected) {
+          console.warn(`🤖 Robot connection timeout - no updates for ${Math.round(timeSinceLastUpdate/1000)}s`);
+          setIsConnected(false);
+        }
+      }
+    }, 5000); // Check every 5 seconds (same as heartbeat interval)
 
     // Listen to battery data
     const batteryQuery = query(
@@ -317,6 +348,7 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
       cameraStatusUnsubscribe();
       nfcUnsubscribe();
       explorationUnsubscribe();
+      clearInterval(connectionCheckInterval);
     };
   }, []);
 

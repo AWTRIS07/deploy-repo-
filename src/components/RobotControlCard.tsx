@@ -76,9 +76,9 @@ export function RobotControlCard({
       const commandData = {
         robotId: robotId,
         command: command,
+        parameters: additionalData,
         timestamp: serverTimestamp(),
-        status: 'pending',
-        ...additionalData
+        status: 'pending'
       };
 
       await addDoc(collection(firestoreDB, 'robot_commands'), commandData);
@@ -312,7 +312,7 @@ export function RobotControlCard({
         {/* Navigation Controls */}
         <div className="grid grid-cols-2 gap-2">
           <Button
-            onClick={() => sendCommand('RETURN_TO_START')}
+            onClick={() => sendCommand('return_home')}
             disabled={isSendingCommand || !isConnected}
             variant="outline"
           >
@@ -321,7 +321,7 @@ export function RobotControlCard({
           </Button>
           
           <Button
-            onClick={() => sendCommand('GO_TO_TAG', { targetTag: 5 })}
+            onClick={() => sendCommand('go_to_tag', { tag_id: 5 })}
             disabled={isSendingCommand || !isConnected}
             variant="outline"
           >
@@ -333,12 +333,14 @@ export function RobotControlCard({
         {/* Trajectory Control */}
         <div className="space-y-2">
           <Button
-            onClick={() => sendTrajectoryCommand([
-              { tagId: 1, delayOverrideMs: 1000 },
-              { tagId: 5, delayOverrideMs: 2000 },
-              { tagId: 10, delayOverrideMs: 1500 },
-              { tagId: 1, delayOverrideMs: 500 }
-            ])}
+            onClick={() => sendCommand('follow_path', { 
+              waypoints: [
+                { tagId: 1, delayOverrideMs: 1000 },
+                { tagId: 5, delayOverrideMs: 2000 },
+                { tagId: 10, delayOverrideMs: 1500 },
+                { tagId: 1, delayOverrideMs: 500 }
+              ]
+            })}
             disabled={isSendingCommand || !isConnected}
             className="w-full"
           >
@@ -350,7 +352,7 @@ export function RobotControlCard({
         {/* Settings Controls */}
         <div className="grid grid-cols-2 gap-2">
           <Button
-            onClick={() => sendSpeedSettings(3.0, 0.4, 0.06)}
+            onClick={() => sendCommand('set_speed', { speed: 3.0 })}
             disabled={isSendingCommand || !isConnected}
             variant="outline"
             size="sm"
@@ -360,7 +362,7 @@ export function RobotControlCard({
           </Button>
           
           <Button
-            onClick={() => sendDelaySettings(1000)}
+            onClick={() => sendCommand('set_delay', { delay: 1000 })}
             disabled={isSendingCommand || !isConnected}
             variant="outline"
             size="sm"

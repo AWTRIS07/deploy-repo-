@@ -125,6 +125,7 @@ export default function HomePage() {
     returnHome,
     setSpeed: appSetSpeed,
     setDelay: appSetDelay,
+    followPath: appFollowPath,
     isConnected: appIsConnected,
     isLoading: appIsLoading
   } = useAppContext();
@@ -976,14 +977,13 @@ const toggleSimulation = () => {
     try {
       await goToTag(tagId);
       toast({ 
-        title: "Navigating to Tag", 
-        description: `Robot is navigating to tag ${tagId}.`,
-        variant: "default"
+        title: "Navigation Started", 
+        description: `Robot navigating to tag ${tagId}.` 
       });
     } catch (error) {
       toast({ 
         title: "Error", 
-        description: "Failed to navigate to tag.", 
+        description: "Failed to start navigation.", 
         variant: "destructive" 
       });
     }
@@ -991,9 +991,14 @@ const toggleSimulation = () => {
 
   const handleAppContextSpeedChange = async (newSpeed: number) => {
     try {
-      await appSetSpeed(newSpeed);
-      setSpeed(newSpeed * MAX_SPEED_KMH); // Convert to km/h for existing UI
-      localStorage.setItem(LOCAL_STORAGE_KEY_SPEED, (newSpeed * MAX_SPEED_KMH).toString());
+      // Convert km/hr to robot's expected format (0-10 range)
+      const robotSpeed = Math.max(0, Math.min(10, newSpeed));
+      await appSetSpeed(robotSpeed);
+      setSpeed(robotSpeed);
+      toast({ 
+        title: "Speed Updated", 
+        description: `Robot speed set to ${robotSpeed.toFixed(1)} km/hr.` 
+      });
     } catch (error) {
       toast({ 
         title: "Error", 
@@ -1005,12 +1010,34 @@ const toggleSimulation = () => {
 
   const handleAppContextDelayChange = async (newDelay: number) => {
     try {
-      await appSetDelay(newDelay / 1000); // Convert ms to seconds for AppContext
+      // Convert milliseconds to seconds for AppContext
+      const delaySeconds = newDelay / 1000;
+      await appSetDelay(delaySeconds);
       setGlobalTagVisitDelayMs(newDelay);
+      toast({ 
+        title: "Delay Updated", 
+        description: `Robot delay set to ${newDelay}ms.` 
+      });
     } catch (error) {
       toast({ 
         title: "Error", 
         description: "Failed to update delay.", 
+        variant: "destructive" 
+      });
+    }
+  };
+
+  const handleAppContextFollowPath = async (waypoints: number[]) => {
+    try {
+      await appFollowPath(waypoints);
+      toast({ 
+        title: "Path Following Started", 
+        description: `Robot following path with ${waypoints.length} waypoints.` 
+      });
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to start path following.", 
         variant: "destructive" 
       });
     }
