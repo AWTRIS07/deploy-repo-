@@ -1,4 +1,5 @@
-{
+{ 
+  "homepage": "https://awtris07.github.io/deploy-repo-/",
   "name": "nextn",
   "version": "0.1.0",
   "private": true,
@@ -9,7 +10,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "predeploy": "next run build",
+    "deploy": "gh-pages -d build"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.8.0",
